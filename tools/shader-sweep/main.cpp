@@ -578,6 +578,8 @@ Shader::Profile OfflineProfile(const Shader::HostTranslateInfo& host) {
     profile.max_user_clip_distances = 8;
     profile.max_subgroup_size = 32;
     profile.support_typeless_image_loads = true;
+    // Handle table arrays are indexed per invocation, as with Vulkan.
+    profile.support_sampled_image_array_nonuniform_indexing = true;
     return profile;
 }
 
