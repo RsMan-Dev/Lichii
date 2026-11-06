@@ -556,6 +556,7 @@ Shader::HostTranslateInfo OfflineHost() {
     host.support_conditional_barrier = true;
     host.support_viewport_index_layer = true;
     host.support_geometry_shader_passthrough = true;
+    host.support_handle_table_arrays = true;
     host.ApplyDescriptorLimitPolicy();
     return host;
 }
