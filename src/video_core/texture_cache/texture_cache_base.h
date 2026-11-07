@@ -666,6 +666,8 @@ private:
     /// True while a clear binds its render targets (UpdateRenderTargets(true)), so JoinImages can
     /// skip the upload of a new target the clear overwrites whole.
     bool clearing_render_targets = false;
+    /// FindRenderTargetView is looking for its image.
+    bool inserting_render_target = false;
     bool is_rescaling = false;
     u64 total_used_memory = 0;
     u64 minimum_memory;

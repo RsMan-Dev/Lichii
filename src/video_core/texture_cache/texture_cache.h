@@ -3274,11 +3274,18 @@ ImageId TextureCache<P>::JoinImages(const ImageInfo& info, GPUVAddr gpu_addr, DA
         }
         copied_whole = std::ranges::all_of(written, [](u8 whole) { return whole != 0; });
     }
-    if (overwritten_by_clear()) {
+    // A new render target over memory whose last contents only the GPU has: the guest bytes are
+    // stale, and a target newly placed in that memory has no defined contents anyway.
+    const bool over_gpu_contents =
+        inserting_render_target && join_copies_to_do.empty() &&
+        std::ranges::any_of(join_bad_overlap_ids, [this](ImageId overlap_id) {
+            return True(slot_images[overlap_id].flags & ImageFlagBits::GpuModified);
+        });
+    if (!over_gpu_contents && overwritten_by_clear()) {
         // Stays CpuModified: UpdateRenderTargets' PrepareImage drops the upload only when
         // IsFullClear agrees the clear covers the whole image, and uploads it otherwise.
         runtime.TransitionImageLayout(new_image);
-    } else if (copied_whole) {
+    } else if (copied_whole || over_gpu_contents) {
         // What RefreshContents does, without the upload.
         new_image.flags &= ~ImageFlagBits::CpuModified;
         if (False(new_image.flags & ImageFlagBits::Tracked)) {
@@ -3555,7 +3562,9 @@ ImageViewId TextureCache<P>::FindRenderTargetView(const ImageInfo& info, GPUVAdd
     bool delete_state = has_deleted_images;
     do {
         has_deleted_images = false;
+        inserting_render_target = true;
         image_id = FindOrInsertImage(info, gpu_addr);
+        inserting_render_target = false;
         delete_state |= has_deleted_images;
     } while (has_deleted_images);
     has_deleted_images = delete_state;
